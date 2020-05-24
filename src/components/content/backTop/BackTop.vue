@@ -15,9 +15,9 @@
     width: 43px;
     height: 43px;
   }
-  .back-top {
-    position: fixed;
-    right: 8px;
-    bottom: 44px;
-  }
+  /*.back-top {*/
+  /*  position: fixed;*/
+  /*  right: 8px;*/
+  /*  bottom: 50px;*/
+  /*}*/
 </style>

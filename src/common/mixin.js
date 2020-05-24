@@ -4,7 +4,6 @@
 //它不会影响我们在相同的地方其他的调用
 //例如下面的mounted里面 我们在组件中做了其他事情，当我们混入时它会合并一起执行 类似于类的继承
 import {debounce} from "./utils";
-
 export const itemListenerMixin ={
   data() {
     return {
@@ -18,5 +17,23 @@ export const itemListenerMixin ={
     }
 
     this.$bus.$on('itemImageLoad',this.itemListener)
+  }
+}
+
+import BackTop from "components/content/backTop/BackTop";//返回顶部按钮
+export const backTopMixin ={
+  components:{
+    BackTop
+  },
+  data() {
+    return {
+      showBackTop: false
+    }
+  },
+  methods: {
+    backTopClick() {
+      this.$refs.scroll.scrollTo(0, 0)
+      //console.log('回到顶部');
+    }
   }
 }

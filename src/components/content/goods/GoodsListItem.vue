@@ -50,8 +50,9 @@ vue 中监听图片加载 用@load
         this.$bus.$emit('itemImageLoad')
       },
       itemClick(){
-        this.$router.push('/detail/'+this.goodsItem.iid)
-        console.log('googsitem clidk');
+        if (this.goodsItem.iid){
+          this.$router.push('/detail/'+this.goodsItem.iid)
+        }
       }
     }
   }

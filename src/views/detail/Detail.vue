@@ -10,11 +10,12 @@
         <detail-comment-info ref="comment" :comment-info="commentInfo"/>
         <detail-recommend-info ref="recommend" :recommend-list="recommendInfo"/>
       </scroll>
+      <detail-bottom-bar @addToCart="addToCart"/>
+      <back-top class="back-top" @click.native="backTopClick" v-show="showBackTop"/>
   </div>
 </template>
 
 <script>
-  import Scroll from 'components/common/scroll/Scroll'
   import DetailNavBar from "./childComs/DetailNavBar";
   import DetailSwiper from "./childComs/DetailSwiper";
   import DetailShopInfo from "./childComs/DetailShopInfo";
@@ -23,10 +24,16 @@
   import DetailParamInfo from "./childComs/DetailParamInfo";
   import DetailCommentInfo from "./childComs/DetailCommentInfo";
   import DetailRecommendInfo from "./childComs/DetailRecommendInfo";
+  import DetailBottomBar from "./childComs/DetailBottomBar";
+
+  import Scroll from 'components/common/scroll/Scroll'
+  import BackTop from "components/content/backTop/BackTop";
 
   import {getDetail, getRecommend, Goods, Shop, GoodsParam} from "../../network/detail";
   import {debounce} from "../../common/utils";
-  import {itemListenerMixin} from  "../../common/mixin";
+  import {itemListenerMixin,backTopMixin} from  "../../common/mixin";
+  import {BACKTOP_DISTANCE} from "@/common/const";
+
   export default {
     name: "Detail",
     components:{
@@ -38,7 +45,9 @@
       DetailGoodsInfo,
       DetailParamInfo,
       DetailCommentInfo,
-      DetailRecommendInfo
+      DetailRecommendInfo,
+      DetailBottomBar,
+      BackTop
     },
     data() {
       return {
@@ -52,12 +61,15 @@
         commentInfo: {},
         recommendInfo:[],
         themeTops: [],
-        currentTitleIndex:0
+        currentTitleIndex:0,
+        message: '',
+        isShow:false
       }
     },
     //这里是我们混入的内容
     mixins:[
-      itemListenerMixin
+      itemListenerMixin,
+      backTopMixin
     ],
     // mounted() {
     //   //监听detail-recommend中图片加载
@@ -74,13 +86,33 @@
       this.getOffsetTops()
     },
     methods: {
+      addToCart() {
+        //1.获取购物车商品需要展示的信息
+        // 1.1创建对象
+        const product = {}
+        // 1.2对象信息
+        product.iid = this.iid;
+        product.img = this.topImages[0];
+        product.title = this.goods.title;
+        product.desc = this.goods.desc;
+        product.newPrice = this.goods.nowPrice;
+
+        //2.加入购物车
+        //this.$store.commit('addCart',product);
+        this.$store.dispatch('addCart',product).then(res=>{
+          this.$toast.showMessage(res)
+        })
+      },
       contentScroll(position) {
+        // 1.决定backTop是否显示
+        this.showBackTop = (-position.y) > BACKTOP_DISTANCE
+        // 2.监听我们的滚动位置是否移动到 对应主题的offsetTop 的位置
         this.listenScrollTheme(-position.y)
       },
       listenScrollTheme(position){
           if (this.themeTops){
             for (let i=0;i<this.themeTops.length;i++){
-              if (position >= this.themeTops[i]  &&  position < this.themeTops[i+1]){
+              if (this.currentTitleIndex !== i  &&  position >= this.themeTops[i]  &&  position < this.themeTops[i+1]){
                 this.currentTitleIndex = i;
                 break;
               }
@@ -90,8 +122,11 @@
           }
       },
       getOffsetTops(){
+        //因为我们是在updated里面调用的 所以每次数据更新时 你得先赋值为空 再重新拿到offsetTop
+        //不然会每次数据更新时都会往里面塞数据
         this.themeTops = []
-        this.themeTops.push(this.$refs.base.$el.offsetTop)
+        this.themeTops.push(0)
+        //this.themeTops.push(this.$refs.base.$el.offsetTop)
         this.themeTops.push(this.$refs.param.$el.offsetTop)
         this.themeTops.push(this.$refs.comment.$el.offsetTop)
         this.themeTops.push(this.$refs.recommend.$el.offsetTop)
@@ -134,13 +169,33 @@
           if (data.rate.list) {
             this.commentInfo = data.rate.list[0];
           }
+
+          //这里也是不行的 因为这里只是监听dom挂载完成了，图片的加载是否完成是不知道
+          // this.$nextTick(() => {
+          //   this.themeTops = []
+          //   this.themeTops.push(this.$refs.base.$el.offsetTop)
+          //   this.themeTops.push(this.$refs.param.$el.offsetTop)
+          //   this.themeTops.push(this.$refs.comment.$el.offsetTop)
+          //   this.themeTops.push(this.$refs.recommend.$el.offsetTop)
+          //   this.themeTops.push(Number.MAX_VALUE)
+          // })
+
+          //如果非要在这里那我们使用防抖
+          //定义个变量getOffsetTops 在别处调用即可
+          // this.getOffsetTops = debounce(()=>{
+          //     this.themeTops = []
+          //     this.themeTops.push(0)
+          //     this.themeTops.push(this.$refs.param.$el.offsetTop)
+          //     this.themeTops.push(this.$refs.comment.$el.offsetTop)
+          //     this.themeTops.push(this.$refs.recommend.$el.offsetTop)
+          //     this.themeTops.push(Number.MAX_VALUE)
+          // },50)
         })
       },
       getRecommend() {
         getRecommend().then((res,error)=> {
           if (error) return
           this.recommendInfo = res.data.list
-          console.log(this.recommendInfo);
         })
       }
     },
@@ -169,5 +224,11 @@
     position: absolute;
     top: 44px;
     bottom: 60px;
+  }
+
+  .back-top {
+    position: fixed;
+    right: 8px;
+    bottom: 54px;
   }
 </style>

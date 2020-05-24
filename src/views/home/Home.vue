@@ -31,7 +31,7 @@
 当我们想要监听组件根元素的事件时 需要加修饰符 .native
 也可以在外层包一个div
 -->
-    <back-top @click.native="backTopClick" v-show="showBackTop"/>
+    <back-top class="back-top" @click.native="backTopClick" v-show="showBackTop"/>
   </div>
 </template>
 
@@ -259,5 +259,11 @@
     left: 0;
     right: 0;
     overflow: hidden;
+  }
+
+  .back-top {
+    position: fixed;
+    right: 8px;
+    bottom: 44px;
   }
 </style>
